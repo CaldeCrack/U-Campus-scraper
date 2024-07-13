@@ -72,6 +72,27 @@ t = threading.Thread(target=animate)
 t.start()
 
 
+# Validate year and semester
+semesters = {0: "annual", 1: "autumn", 2: "spring", 3: "summer"}
+try:
+	url : str = f"https://ucampus.uchile.cl/m/fcfm_catalogo/?semestre={semester}"
+	request = requests.get(url)
+	soup = BeautifulSoup(request.content, 'html.parser')
+	chosen = soup.find('option', selected=True)
+	page_semester : str = chosen.get('value')
+	if page_semester != semester:
+		raise(ValueError)
+except ValueError:
+	final_message = f"Year {green}{year}{default} and semester {green}{semesters[int(semester[-1])]}{default} does not exist in {bold}{underline}U-Campus{default}"
+	done = True
+except ConnectionError:
+	final_message = "Scraping failed D:"
+	done = True
+except Exception:
+	final_message = "Unhandled exception"
+	done = True
+
+
 # Get departments from page
 departments : dict[str, int] = {}
 try:
@@ -83,11 +104,10 @@ try:
 		departments[department.text] = department.get('value')
 except ConnectionError:
 	final_message = "Scraping failed D:"
+	done = True
 except Exception:
 	final_message = "Unhandled exception"
-finally:
 	done = True
-	print(f"{cursor_up}{erase_line}{cursor_up}")
 
 
 # Scrap U-Campus webpage
@@ -130,11 +150,10 @@ try:
 			scrap_list.append(course)
 except ConnectionError:
 	final_message = "Scraping failed D:"
+	done = True
 except Exception:
 	final_message = "Unhandled exception"
-finally:
 	done = True
-	print(f"{cursor_up}{erase_line}{cursor_up}")
 
 
 # Save to JSON file
