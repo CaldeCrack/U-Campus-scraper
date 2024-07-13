@@ -1,6 +1,7 @@
 from datetime import datetime
 from bs4 import BeautifulSoup
-import requests, json, threading, time, sys
+import requests, json, threading, time
+
 
 # Color and format escapes
 default		: str = "\033[39;49;0m"
@@ -15,8 +16,6 @@ underline	: str = "\033[4m"
 cursor_up	: str = "\033[1A"
 erase_line	: str = "\033[1M"
 
-# Global variables
-actual_year = datetime.now().year
 
 # Program description
 print(f"\n{contrast} ########## Ucampus web scrapping tool ########## {default}\n")
@@ -24,7 +23,9 @@ print(f"Tool to {bold}{underline}scrap{default} the {bold}departments{default} a
 with their codes from {bold}{underline}U-Campus{default} in a specific\nyear and semester.")
 print(f"\n\n\n{cursor_up}{cursor_up}")
 
+
 # Get user year input
+actual_year = datetime.now().year
 year : int = -1
 while True:
 	print(f"{default}Select {bold}{underline}year{default} [1996-{actual_year}]: {green}", end='')
@@ -80,8 +81,11 @@ try:
 	select = soup.find('select', id='depto')
 	for department in select.findAll('option'):
 		departments[department.text] = department.get('value')
-except Exception:
+except ConnectionError:
 	final_message = "Scraping failed D:"
+except Exception:
+	final_message = "Unhandled exception"
+finally:
 	done = True
 	print(f"{cursor_up}{erase_line}{cursor_up}")
 
@@ -124,8 +128,11 @@ try:
 				}
 			}
 			scrap_list.append(course)
-except Exception:
+except ConnectionError:
 	final_message = "Scraping failed D:"
+except Exception:
+	final_message = "Unhandled exception"
+finally:
 	done = True
 	print(f"{cursor_up}{erase_line}{cursor_up}")
 
