@@ -8,7 +8,7 @@ default		: str = "\033[39;49;0m"
 contrast	: str = "\033[30;47m"
 white		: str = "\033[37m"
 green		: str = "\033[32;1m"
-red			: str = "\033[31;1m"
+red		: str = "\033[31;1m"
 bold		: str = "\033[1m"
 underline	: str = "\033[4m"
 
