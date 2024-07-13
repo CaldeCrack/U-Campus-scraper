@@ -3,17 +3,17 @@ from bs4 import BeautifulSoup
 import requests, json
 
 # Color and format escapes
-default		= "\033[39;49;0m"
-contrast	= "\033[30;47m"
-white		= "\033[37m"
-green		= "\033[32;1m"
-red			= "\033[31;1m"
-bold		= "\033[1m"
-underline	= "\033[4m"
+default		: str = "\033[39;49;0m"
+contrast	: str = "\033[30;47m"
+white		: str = "\033[37m"
+green		: str = "\033[32;1m"
+red			: str = "\033[31;1m"
+bold		: str = "\033[1m"
+underline	: str = "\033[4m"
 
 # Cursor movement
-cursor_up	= "\033[1A"
-erase_line	= "\033[1M"
+cursor_up	: str = "\033[1A"
+erase_line	: str = "\033[1M"
 
 # Global variables
 actual_year = datetime.now().year
@@ -25,11 +25,11 @@ with their codes from {bold}{underline}U-Campus{default} in a specific\nyear and
 print(f"\n\n\n{cursor_up}{cursor_up}")
 
 # Get user year input
-year = -1
+year : int = -1
 while True:
 	print(f"{default}Select {bold}{underline}year{default} [1996-{actual_year}]: {green}", end='')
-	user_input = input('')
-	year = int(user_input) if user_input.isnumeric() else -1
+	user_input : str = input('')
+	year : int = int(user_input) if user_input.isnumeric() else -1
 
 	if not 1996 <= year <= actual_year:
 		print(f'{cursor_up}{erase_line}{cursor_up}')
@@ -39,11 +39,11 @@ print(f"\n{cursor_up}{cursor_up}")
 
 
 # Get user semester input
-semester = -1
+semester : int = -1
 while True:
 	print(f"{default}Select {bold}{underline}semester{default} [0 (annual) / 1 (autumn) / 2 (spring) / 3 (summer)]: {green}", end='')
-	user_input = input('')
-	semester = int(user_input) if user_input.isnumeric() else -1
+	user_input : str = input('')
+	semester : int = int(user_input) if user_input.isnumeric() else -1
 
 	if not 0 <= semester <= 3:
 		print(f'{cursor_up}{erase_line}{cursor_up}')
@@ -53,7 +53,7 @@ print(f"{default}")
 
 
 # Internal department codes used in U-Campus links
-departments = {
+departments : dict[str, int] = {
 	"AA - Área para el Aprendizaje de la Ingeniería y Ciencias A2IC": 12060003,
 	"AS - Departamento de Astronomía": 3,
 	"CC - Departamento de Ciencias de la Computación": 5,
@@ -79,14 +79,15 @@ departments = {
 	"QB - Departamento de Ingeniería Química y Biotecnología": 307
 }
 
+
 # Scrap U-Campus webpage
-scrap_list = []
-pk = 0
+scrap_list : list[dict] = []
+pk : int = 0
 
 # Departments
 for department_name in departments.keys():
 	pk += 1
-	department = {
+	department : dict = {
 		"model": "stack_overbuxef.tag",
 		"pk": pk,
 		"fields": {
@@ -97,16 +98,16 @@ for department_name in departments.keys():
 
 # Courses
 for code in departments.values():
-	url = f"https://ucampus.uchile.cl/m/fcfm_catalogo/?semestre={year}{semester}&depto={code}"
+	url : str = f"https://ucampus.uchile.cl/m/fcfm_catalogo/?semestre={year}{semester}&depto={code}"
 	request = requests.get(url)
 	soup = BeautifulSoup(request.content, 'html.parser')
 	for course_info in soup.findAll('div', class_='objeto'):
 		name = course_info.find('h1').text.strip()
 		code = course_info.find('h2').text.strip()
-		course_name = f"{code} - {name}"
+		course_name : str = f"{code} - {name}"
 		pk += 1
 
-		course = {
+		course : dict = {
 			"model": "stack_overbuxef.tag",
 			"pk": pk,
 			"fields": {
@@ -120,4 +121,5 @@ for code in departments.values():
 with open('initial_tags.json', 'w', encoding='utf-8') as f:
 	json.dump(scrap_list, f, ensure_ascii=False, indent=4)
 
-print("\nScrapping finished :D\n")
+
+print("\Scraping finished :D\n")
