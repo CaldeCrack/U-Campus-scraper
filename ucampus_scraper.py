@@ -1,6 +1,6 @@
 from datetime import datetime
 from bs4 import BeautifulSoup
-import requests, json
+import requests, json, threading, time
 
 # Color and format escapes
 default		: str = "\033[39;49;0m"
@@ -80,6 +80,24 @@ departments : dict[str, int] = {
 }
 
 
+# Waiting animation
+done : bool = False
+final_message : str = ""
+def animate() -> None:
+	print(f"\n{cursor_up}{cursor_up}")
+	animation : str = "-\|/"
+	index : int = 0
+	while not done:
+		print(f"\rScraping {animation[index % 4]}", end='')
+		index += 1
+		time.sleep(0.1)
+	print(f"{erase_line}{cursor_up}")
+	print(f"{final_message}\n")
+
+t = threading.Thread(target=animate)
+t.start()
+
+
 # Scrap U-Campus webpage
 scrap_list : list[dict] = []
 pk : int = 0
@@ -97,24 +115,29 @@ for department_name in departments.keys():
 	scrap_list.append(department)
 
 # Courses
-for code in departments.values():
-	url : str = f"https://ucampus.uchile.cl/m/fcfm_catalogo/?semestre={year}{semester}&depto={code}"
-	request = requests.get(url)
-	soup = BeautifulSoup(request.content, 'html.parser')
-	for course_info in soup.findAll('div', class_='objeto'):
-		name = course_info.find('h1').text.strip()
-		code = course_info.find('h2').text.strip()
-		course_name : str = f"{code} - {name}"
-		pk += 1
+try:
+	for code in departments.values():
+		url : str = f"https://ucampus.uchile.cl/m/fcfm_catalogo/?semestre={year}{semester}&depto={code}"
+		request = requests.get(url)
+		soup = BeautifulSoup(request.content, 'html.parser')
+		for course_info in soup.findAll('div', class_='objeto'):
+			name = course_info.find('h1').text.strip()
+			code = course_info.find('h2').text.strip()
+			course_name : str = f"{code} - {name}"
+			pk += 1
 
-		course : dict = {
-			"model": "stack_overbuxef.tag",
-			"pk": pk,
-			"fields": {
-				"nombre": course_name
+			course : dict = {
+				"model": "stack_overbuxef.tag",
+				"pk": pk,
+				"fields": {
+					"nombre": course_name
+				}
 			}
-		}
-		scrap_list.append(course)
+			scrap_list.append(course)
+except Exception:
+	final_message = "Scraping failed D:"
+	done = True
+	print(f"{cursor_up}{erase_line}{cursor_up}")
 
 
 # Save to JSON file
@@ -122,4 +145,6 @@ with open('initial_tags.json', 'w', encoding='utf-8') as f:
 	json.dump(scrap_list, f, ensure_ascii=False, indent=4)
 
 
-print("\Scraping finished :D\n")
+# End animation
+final_message = "Scraping finished :D"
+done = True
