@@ -116,8 +116,8 @@ for department_name in departments.keys():
 
 # Courses
 try:
+	semester = f"{year}{semester}" if 2013 <= year <= actual_year else f"{(year - 1996) * 4 + 67 + semester}"
 	for code in departments.values():
-		semester = f"{year}{semester}" if 2013 <= year <= actual_year else f"{year - 1996} * 4 + 67 + {semester}"
 		url : str = f"https://ucampus.uchile.cl/m/fcfm_catalogo/?semestre={semester}&depto={code}"
 		request = requests.get(url)
 		soup = BeautifulSoup(request.content, 'html.parser')
