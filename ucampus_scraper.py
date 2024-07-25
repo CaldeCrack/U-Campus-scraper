@@ -146,14 +146,42 @@ def program(year : int, semester : int) -> None:
 						case "programa":
 							course[elem_text] = elem.find('a').get('href')
 						case "créditos:":
-							course[elem_text] = int(list(metadata)[i + 2].text.strip())
+							course[elem_text.replace(':', '')] = int(list(metadata)[i + 2].text.strip())
 						case "requisitos:" | "equivalencias" | "comentario":
-							course[elem_text] = list(metadata)[i + 2].text.strip()
-
+							course[elem_text.replace(':', '')] = list(metadata)[i + 2].text.strip()
 				if course_info.find('span', class_='sustentable enfocado'):
 					course['sustentabilidad'] = "Enfocado en sustentabilidad"
 				elif course_info.find('span', class_='sustentable'):
 					course['sustentabilidad'] = "Relacionado con sustentabilidad"
+
+				# Get section info
+				sections : list[dict] = []
+				for section_info in course_info.find('table', class_='cursos').find('tbody').findAll('tr'):
+					section : dict = {}
+
+					# Get section number, teachers and extra info
+					section_header = section_info.find('h1').text.strip().replace('\t\t', ' ').split(' ')
+					section['sección'] = int(section_header[1])
+					if len(section_header) > 2:
+						section['modalidad'] = section_header[-1]
+					if section_info.find('h2'):
+						section['info'] = section_info.find('h2').text.strip()
+					section_teachers = section_info.find('ul', class_='profes').findAll('li')
+					professor_text : str = "profesores" if len(section_teachers) > 1 else "profesor(a)"
+					if section_teachers:
+						section[professor_text] = [teacher.text.strip() for teacher in section_teachers] if len(section_teachers) > 1 \
+													else [teacher.text.strip() for teacher in section_teachers][0]
+					else:
+						section[professor_text] = 'No tiene asignado un(a) profesor(a)'
+
+					# Section schedule
+					section_schedule = section_info.findAll('td')[-1].find('div', class_='no-movil')
+					if section_schedule := str(section_schedule).replace('<br/>', '<').replace('>', '<').strip().split('<')[2:-2]:
+						if section_schedule[0]:
+							section['Horario'] = section_schedule if len(section_schedule) > 1 else section_schedule[0]
+					sections.append(section)
+
+				course['secciones'] = sections
 				course_list.append(course)
 
 			department : dict = {
