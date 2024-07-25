@@ -133,38 +133,27 @@ def program(year : int, semester : int) -> None:
 			soup = BeautifulSoup(request.content, 'html.parser')
 			course_list : list[dict] = []
 			for course_info in soup.findAll('div', class_='ramo'):
+				course : dict = {}
+
 				# Get course info
 				name : str = course_info.find('h1').text.strip()
 				code : str = course_info.find('h2').text.strip()
-				course_name : str = f"{code} - {name}"
+				course['nombre'] = f"{code} - {name}"
 				metadata = course_info.find('dl', class_='leyenda')
-				program : str = "No posee programa"
-				credit : str = None
-				requirements : str = ""
-				equivalences : str = "No posee equivalencias"
-				comments : str = "No posee comentarios"
 				for i, elem in enumerate(metadata):
-					elem_text : str = elem.text.strip()
+					elem_text : str = elem.text.strip().lower()
 					match elem_text:
-						case "Programa":
-							program = elem.find('a').get('href')
-						case "Créditos:":
-							credit = int(list(metadata)[i + 2].text.strip())
-						case "Requisitos:":
-							requirements = list(metadata)[i + 2].text.strip()
-						case "Equivalencias":
-							equivalences = list(metadata)[i + 2].text.strip()
-						case "Comentarios:":
-							comments = list(metadata)[i + 2].text.strip()
+						case "programa":
+							course[elem_text] = elem.find('a').get('href')
+						case "créditos:":
+							course[elem_text] = int(list(metadata)[i + 2].text.strip())
+						case "requisitos:" | "equivalencias" | "comentario":
+							course[elem_text] = list(metadata)[i + 2].text.strip()
 
-				course : dict = {
-					"nombre": course_name,
-					"programa": program,
-					"créditos": credit,
-					"requisitos": requirements,
-					"equivalencias": equivalences,
-					"comentarios": comments
-				}
+				if course_info.find('span', class_='sustentable enfocado'):
+					course['sustentabilidad'] = "Enfocado en sustentabilidad"
+				elif course_info.find('span', class_='sustentable'):
+					course['sustentabilidad'] = "Relacionado con sustentabilidad"
 				course_list.append(course)
 
 			department : dict = {
