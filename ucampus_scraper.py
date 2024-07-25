@@ -18,6 +18,7 @@ erase_line	: str = "\033[1M"
 # Waiting animation
 done : bool = False
 final_message : str = ""
+error : str = ""
 def animate() -> None:
 	print(f"\n{cursor_up}{cursor_up}")
 	animation : str = "-\|/"
@@ -27,7 +28,11 @@ def animate() -> None:
 		index += 1
 		time.sleep(0.1)
 	print(f"{erase_line}{cursor_up}")
-	print(f"{final_message}\n")
+	print(f"{final_message}\n", end='')
+	if error:
+		print(f"{error}\n")
+	else:
+		print()
 
 
 # Credits to rlorcac on GitHub for explaining in code the formula I was using to create the URL parameter
@@ -39,8 +44,8 @@ def year_semester_to_URL_parameter(year: int, semester: int) -> str:
 def interactive_program() -> None:
 	# Program description
 	print(f"\n{contrast} ########## Ucampus web scrapping tool ########## {default}\n")
-	print(f"Tool to {bold}{underline}scrap{default} the {bold}departments{default} and {bold}courses{default}")
-	print(f"with their codes from {bold}{underline}U-Campus{default} in a specific\nyear and semester.")
+	print(f"Tool to {bold}{underline}scrap{default} the {bold}departments{default} and {bold}courses{default} at {red}FCFM{default}")
+	print(f"with their codes from {bold}{underline}U-Campus{default} in a specific year\nand semester.")
 	print(f"\n\n\n{cursor_up}{cursor_up}")
 
 	# Get user year input
@@ -74,7 +79,7 @@ def interactive_program() -> None:
 
 def program(year : int, semester : int) -> None:
 	# Start animation thread
-	global done, final_message
+	global done, final_message, error
 	t = threading.Thread(target=animate)
 	t.start()
 
@@ -95,9 +100,11 @@ def program(year : int, semester : int) -> None:
 	except ConnectionError:
 		final_message = "Scraping failed D:"
 		done = True
-	except Exception:
+	except Exception as e:
+		error = e
 		final_message = "Unhandled exception"
 		done = True
+		return
 
 	# Get departments from page
 	departments : dict[str, int] = {}
@@ -111,9 +118,11 @@ def program(year : int, semester : int) -> None:
 	except ConnectionError:
 		final_message = "Scraping failed D:"
 		done = True
-	except Exception:
+	except Exception as e:
+		error = e
 		final_message = "Unhandled exception"
 		done = True
+		return
 
 	# Add courses within their departments
 	scrap_list : list[dict] = []
@@ -123,12 +132,38 @@ def program(year : int, semester : int) -> None:
 			request = requests.get(url)
 			soup = BeautifulSoup(request.content, 'html.parser')
 			course_list : list[dict] = []
-			for course_info in soup.findAll('div', class_='objeto'):
-				name = course_info.find('h1').text.strip()
-				code = course_info.find('h2').text.strip()
+			for course_info in soup.findAll('div', class_='ramo'):
+				# Get course info
+				name : str = course_info.find('h1').text.strip()
+				code : str = course_info.find('h2').text.strip()
 				course_name : str = f"{code} - {name}"
+				metadata = course_info.find('dl', class_='leyenda')
+				program : str = "No posee programa"
+				credit : str = None
+				requirements : str = ""
+				equivalences : str = "No posee equivalencias"
+				comments : str = "No posee comentarios"
+				for i, elem in enumerate(metadata):
+					elem_text : str = elem.text.strip()
+					match elem_text:
+						case "Programa":
+							program = elem.find('a').get('href')
+						case "Créditos:":
+							credit = int(list(metadata)[i + 2].text.strip())
+						case "Requisitos:":
+							requirements = list(metadata)[i + 2].text.strip()
+						case "Equivalencias":
+							equivalences = list(metadata)[i + 2].text.strip()
+						case "Comentarios:":
+							comments = list(metadata)[i + 2].text.strip()
+
 				course : dict = {
-					"nombre": course_name
+					"nombre": course_name,
+					"programa": program,
+					"créditos": credit,
+					"requisitos": requirements,
+					"equivalencias": equivalences,
+					"comentarios": comments
 				}
 				course_list.append(course)
 
@@ -140,9 +175,11 @@ def program(year : int, semester : int) -> None:
 	except ConnectionError:
 		final_message = "Scraping failed D:"
 		done = True
-	except Exception:
+	except Exception as e:
+		error = e
 		final_message = "Unhandled exception"
 		done = True
+		return
 
 	# Save to JSON file
 	with open('catalogo.json', 'w', encoding='utf-8') as f:

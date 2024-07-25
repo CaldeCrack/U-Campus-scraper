@@ -1,7 +1,7 @@
 # U-Campus scraper
 
-Tool to <ins>**scrap**</ins> the **departments** and **courses** with their codes from
-<ins> **U-Campus**</ins> in a specific year and semester into a [JSON](https://www.json.org/json-en.html) file.
+Tool to `<ins>`**scrap** `</ins>` the **departments** and their **courses** at FCFM from
+ `<ins>` **U-Campus** `</ins>` in a specific year and semester into a [JSON](https://www.json.org/json-en.html) file.
 
 ## Usage
 
@@ -11,8 +11,14 @@ Tool to <ins>**scrap**</ins> the **departments** and **courses** with their code
 pip install -r requirements.txt
 ```
 
-- Run the script:
+- Run the script in interactive mode:
 
 ```sh
 python ucampus_scraper.py
+```
+
+- Or directly from the terminal:
+
+```sh
+python ucampus_scraper.py <year> <semester>
 ```
