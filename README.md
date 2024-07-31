@@ -22,3 +22,11 @@ python ucampus_scraper.py
 ```sh
 python ucampus_scraper.py <year> <semester>
 ```
+
+Year should be between **1996** and the actual year.
+
+Semester can take four different values them being:
+- 0 (Annual)
+- 1 (Autumn)
+- 2 (Spring)
+- 3 (Summer)
